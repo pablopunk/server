@@ -10,7 +10,7 @@ services:
     image: erisamoe/cloudflared
     container_name: cloudflare
     restart: unless-stopped
-    command: tunnel run --protocol=http2
+    command: tunnel run
     ports:
       - 7844:7844/udp
     environment:
