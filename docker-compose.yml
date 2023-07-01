@@ -101,6 +101,7 @@ services:
     container_name: speedtest
     restart: unless-stopped
     environment:
+      - INTERVAL=600
       - INCLUDE_READABLE_OUTPUT=true
       - INFLUXDB_USER=$INFLUXDB_ADMIN_USER
       - INFLUXDB_PWD=$INFLUXDB_ADMIN_PASSWORD
