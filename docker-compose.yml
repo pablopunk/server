@@ -109,3 +109,78 @@ services:
       - influxdb
     networks:
       - mynetwork
+
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    networks:
+      - mynetwork
+    volumes:
+      - $CONFIG_ROOT/homer:/www/assets:rw
+    user: 0:0 # to get around permissions issues on the volume
+
+  photoprism:
+    image: photoprism/photoprism:preview # or :latest
+    container_name: photoprism
+    restart: unless-stopped
+    stop_grace_period: 10s
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    ports:
+      - "2342:2342"
+    networks:
+      - mynetwork
+    # see all options here https://dl.photoprism.app/docker/docker-compose.yml
+    environment:
+      - PHOTOPRISM_ADMIN_USER=$PHOTOPRISM_ADMIN_USER  # admin login username
+      - PHOTOPRISM_ADMIN_PASSWORD=$PHOTOPRISM_ADMIN_PASSWORD # initial admin password (8-72 characters)
+      - PHOTOPRISM_AUTH_MODE="password"               # authentication mode (public, password)
+      - PHOTOPRISM_SITE_URL="https://photos.$CLOUDFLARE_DOMAIN"  # server URL in the format "http(s)://domain.name(:port)/(path)"
+      - PHOTOPRISM_ORIGINALS_LIMIT=200000000          # file size limit for originals in MB (increase for high-res video)
+      - PHOTOPRISM_HTTP_COMPRESSION="gzip"            # improves transfer speed and bandwidth utilization (none or gzip)
+      - PHOTOPRISM_LOG_LEVEL="info"                   # log level: trace, debug, info, warning, error, fatal, or panic
+      - PHOTOPRISM_READONLY=false                     # do not modify originals directory (reduced functionality)
+      - PHOTOPRISM_EXPERIMENTAL=true                  # enables experimental features
+      - PHOTOPRISM_JPEG_QUALITY=85                    # a higher value increases the quality and file size of JPEG images and thumbnails (25-100)
+      - PHOTOPRISM_DETECT_NSFW=true                   # automatically flags photos as private that MAY be offensive (requires TensorFlow)
+      - PHOTOPRISM_UPLOAD_NSFW=true                   # allows uploads that MAY be offensive (no effect without TensorFlow)
+      - PHOTOPRISM_DATABASE_DRIVER="mysql"            # use MariaDB 10.5+ or MySQL 8+ instead of SQLite for improved performance
+      - PHOTOPRISM_DATABASE_SERVER="mariadb:3306"     # MariaDB or MySQL database server (hostname:port)
+      - PHOTOPRISM_DATABASE_NAME="photoprism"         # MariaDB or MySQL database schema name
+      - PHOTOPRISM_DATABASE_USER=$MARIADB_USER        # MariaDB or MySQL database user name
+      - PHOTOPRISM_DATABASE_PASSWORD=$MARIADB_PASSWORD # MariaDB or MySQL database user password
+      - PHOTOPRISM_SITE_CAPTION="AI-Powered Photos App"
+      - PHOTOPRISM_INIT="https gpu tensorflow"
+      - PHOTOPRISM_FFMPEG_ENCODER="apple"           # FFmpeg encoder ("software", "intel", "nvidia", "apple", "raspberry")
+      - PHOTOPRISM_UID=1000
+      - PHOTOPRISM_GID=1000
+    user: "1000:1000"
+    working_dir: "/photoprism"
+    volumes:
+      - $STORAGE_ROOT/photoprism/originals:/photoprism/originals
+      - $STORAGE_ROOT/photoprism/storage:/photoprism/storage
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb
+    restart: unless-stopped
+    stop_grace_period: 5s
+    networks:
+      - mynetwork
+    security_opt: # see https://github.com/MariaDB/mariadb-docker/issues/434#issuecomment-1136151239
+      - seccomp:unconfined
+      - apparmor:unconfined
+    command: mariadbd --innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
+    volumes:
+      - $CONFIG_ROOT/mariadb/mysql:/var/lib/mysql" # DO NOT REMOVE
+    environment:
+      - MARIADB_AUTO_UPGRADE="1"
+      - MARIADB_INITDB_SKIP_TZINFO="1"
+      - MARIADB_DATABASE="photoprism"
+      - MARIADB_USER=$MARIADB_USER
+      - MARIADB_PASSWORD=$MARIADB_PASSWORD
+      - MARIADB_ROOT_PASSWORD=$MARIADB_PASSWORD
