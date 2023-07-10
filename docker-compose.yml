@@ -7,8 +7,8 @@ networks:
 
 services:
   cloudflare:
-    image: erisamoe/cloudflared
     container_name: cloudflare
+    image: erisamoe/cloudflared
     restart: unless-stopped
     command: tunnel run
     ports:
@@ -19,8 +19,8 @@ services:
       - mynetwork
 
   timemachine:
-    image: odarriba/timemachine
     container_name: timemachine
+    image: odarriba/timemachine
     restart: unless-stopped
     volumes:
       - $TIMEMACHINE_ROOT:/timemachine
@@ -32,8 +32,8 @@ services:
       - AFP_NAME=Backups
 
   uptimekuma:
-    image: louislam/uptime-kuma:latest
     container_name: uptimekuma
+    image: louislam/uptime-kuma:latest
     ports:
       - "3001:3001"
     volumes:
@@ -44,8 +44,8 @@ services:
       - mynetwork
 
   portainer:
-    image: portainer/portainer
     container_name: portainer
+    image: portainer/portainer
     restart: unless-stopped
     ports:
       - 9000:9000
@@ -56,14 +56,14 @@ services:
       - mynetwork
 
   watchtower:
-    image: containrrr/watchtower
     container_name: watchtower
+    image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
   grafana:
-    image: grafana/grafana:latest
     container_name: grafana
+    image: grafana/grafana:latest
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -75,8 +75,8 @@ services:
       - mynetwork
 
   influxdb:
-    image: influxdb:1.8
     container_name: influxdb
+    image: influxdb:1.8
     restart: unless-stopped
     volumes:
       - $CONFIG_ROOT/influxdb:/var/lib/influxdb
@@ -88,8 +88,8 @@ services:
       - mynetwork
 
   speedtest:
-    image: quadstingray/speedtest-influxdb
     container_name: speedtest
+    image: quadstingray/speedtest-influxdb
     restart: unless-stopped
     environment:
       - INTERVAL=600
@@ -103,8 +103,8 @@ services:
       - mynetwork
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
+    image: gcr.io/cadvisor/cadvisor
     command: -logtostderr -docker_only -storage_driver=influxdb -storage_driver_db=influx -storage_driver_host=influxdb:8086
     volumes:
       - /:/rootfs:ro
@@ -119,8 +119,8 @@ services:
       - mynetwork
 
   homer:
-    image: b4bz/homer:latest
     container_name: homer
+    image: b4bz/homer:latest
     restart: unless-stopped
     ports:
       - 8080:8080
@@ -131,8 +131,8 @@ services:
     user: 0:0 # to get around permissions issues on the volume
 
   photoprism:
-    image: photoprism/photoprism:preview # or :latest
     container_name: photoprism
+    image: photoprism/photoprism:preview # or :latest
     restart: unless-stopped
     stop_grace_period: 10s
     security_opt:
@@ -176,8 +176,8 @@ services:
       - $STORAGE_ROOT/photoprism/storage:/photoprism/storage
 
   mariadb:
-    image: mariadb:10.11
     container_name: mariadb
+    image: mariadb:10.11
     restart: unless-stopped
     stop_grace_period: 5s
     networks:
@@ -195,3 +195,20 @@ services:
       - MARIADB_USER=$MARIADB_USER
       - MARIADB_PASSWORD=$MARIADB_PASSWORD
       - MARIADB_ROOT_PASSWORD=$MARIADB_PASSWORD
+
+  homeassistant:
+    container_name: homeassistant
+    image: homeassistant/home-assistant
+    restart: always
+    volumes:
+      - $CONFIG_ROOT/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: "host"
+
+  hacs:
+    container_name: hacs
+    image: frolvlad/alpine-bash:latest
+    restart: "no"
+    volumes:
+      - $CONFIG_ROOT/homeassistant:/config
+    entrypoint: sh -c "apk add --no-cache wget && wget -O - https://get.hacs.xyz | bash -"
