@@ -43,15 +43,6 @@ services:
     networks:
       - mynetwork
 
-  nevergiveup:
-    image: docker
-    container_name: nevergiveup
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "while true; do sleep 60; wget -q --spider $CLOUDFLARE_DOMAIN || docker-compose restart cloudflare; done"
-    depends_on:
-      - cloudflare
-
   portainer:
     image: portainer/portainer
     container_name: portainer
