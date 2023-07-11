@@ -76,7 +76,7 @@ services:
 
   influxdb:
     container_name: influxdb
-    image: influxdb:1.8
+    image: influxdb:1.8-alpine
     restart: unless-stopped
     volumes:
       - $CONFIG_ROOT/influxdb:/var/lib/influxdb
@@ -87,36 +87,26 @@ services:
     networks:
       - mynetwork
 
-  speedtest:
-    container_name: speedtest
-    image: quadstingray/speedtest-influxdb
+  telegraf:
+    container_name: telegraf
+    image: telegraf
     restart: unless-stopped
-    environment:
-      - INTERVAL=600
-      - INCLUDE_READABLE_OUTPUT=true
-      - INFLUXDB_USER=$INFLUXDB_ADMIN_USER
-      - INFLUXDB_PWD=$INFLUXDB_ADMIN_PASSWORD
-      - INFLUXDB_DB=influx
-    depends_on:
-      - influxdb
-    networks:
-      - mynetwork
-
-  cadvisor:
-    container_name: cadvisor
-    image: gcr.io/cadvisor/cadvisor
-    command: -logtostderr -docker_only -storage_driver=influxdb -storage_driver_db=influx -storage_driver_host=influxdb:8086
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
+      - $CONFIG_ROOT/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro # this file needs to be created manually
+      - $STORAGE_ROOT:/Storage # for stats
+      - $TIMEMACHINE_ROOT:/Time-Machine # for stats
+      - /proc:/host/proc:ro
+      - /var/run/utmp:/var/run/utmp:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOST_PROC=/host/proc
+      - HOST_PROC_MOUNTINFO=/proc/1
     depends_on:
       - influxdb
-    ports:
-      - 8081:8080
     networks:
       - mynetwork
+    ports:
+      - '8125:8125'
 
   homer:
     container_name: homer
