@@ -89,6 +89,21 @@ services:
     networks:
       - mynetwork
 
+  speedtest:
+    container_name: speedtest
+    image: quadstingray/speedtest-influxdb:0.8.0
+    restart: unless-stopped
+    environment:
+      - INTERVAL=300
+      - INCLUDE_READABLE_OUTPUT=true
+      - INFLUXDB_DB=influx
+      - INFLUXDB_USER=$INFLUXDB_ADMIN_USER
+      - INFLUXDB_PWD=$INFLUXDB_ADMIN_PASSWORD
+    networks:
+      - mynetwork
+    depends_on:
+      - influxdb
+
   telegraf:
     container_name: telegraf
     image: telegraf
