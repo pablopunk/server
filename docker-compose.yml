@@ -81,6 +81,7 @@ services:
     volumes:
       - $CONFIG_ROOT/influxdb:/var/lib/influxdb
       - $STORAGE_ROOT/data/influxdb/data:/var/lib/influxdb/data
+      - $STORAGE_ROOT/data/influxdb/wal:/var/lib/influxdb/wal
     environment:
       - INFLUXDB_ADMIN_USER=$INFLUXDB_ADMIN_USER
       - INFLUXDB_ADMIN_PASSWORD=$INFLUXDB_ADMIN_PASSWORD
