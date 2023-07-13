@@ -20,16 +20,19 @@ services:
 
   timemachine:
     container_name: timemachine
-    image: odarriba/timemachine
+    image: awlnx/samba-timemachine
     restart: unless-stopped
     volumes:
-      - $TIMEMACHINE_ROOT:/timemachine
+      - $TIMEMACHINE_ROOT:/backups:z
     ports:
-      - 548:548
-      - 636:636
+      - 445:445
     environment:
-      - AFP_SIZE_LIMIT=250000
-      - AFP_NAME=Backups
+      - TZ=$TZ
+      - USER=$SAMBA_USER
+      - PASS=$SAMBA_PASS
+      - USERID=1000
+      - GROUPID=1000
+      - SHARENAME=Backups
 
   uptimekuma:
     container_name: uptimekuma
@@ -38,6 +41,7 @@ services:
       - "3001:3001"
     volumes:
       - $CONFIG_ROOT/uptimekuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
     restart:
       unless-stopped
     networks:
