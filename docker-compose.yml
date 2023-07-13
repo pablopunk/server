@@ -223,3 +223,20 @@ services:
     volumes:
       - $CONFIG_ROOT/homeassistant:/config
     entrypoint: sh -c "apk add --no-cache wget && wget -O - https://get.hacs.xyz | bash -"
+
+  duplicati:
+    container_name: duplicati
+    image: lscr.io/linuxserver/duplicati:latest
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+    volumes:
+      - $CONFIG_ROOT/duplicati:/config
+      - $STORAGE_ROOT/data/duplicati/backups:/backups
+      - $CONFIG_ROOT:/source # this is what gets backed up
+    ports:
+      - 8200:8200
+    networks:
+      - mynetwork
